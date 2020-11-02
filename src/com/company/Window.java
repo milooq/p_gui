@@ -14,9 +14,9 @@ public class Window extends JFrame{
     public static int height = 900;
     public static int scale = 30;
     public static int len = 5;
-    int index = 0;
-    double[] xes = new double[20];
-    double[] yes = new double[20];
+//    int index = 0;
+//    double[] xes = new double[20];
+//    double[] yes = new double[20];
 
     double x0 = 0, y0 = 0, x1 = 0, y1 = 0;
 
@@ -24,7 +24,11 @@ public class Window extends JFrame{
 
     Animator a;
 
+//    static public JButton button;
+
     public Window() {
+
+
 
         this.setVisible(true);
         this.setTitle("Polynomial Graphics");
@@ -37,27 +41,40 @@ public class Window extends JFrame{
 //      add panel to main frame
 
         Graphics g = this.getGraphics();
-
-        a = new Animator(g, scale, len);
-
+        try{
+        a = new Animator(g, scale, len);}
+        catch (NullPointerException e){
+            System.out.println("Шарик, ты балбес");
+        }
+        a.start();
+        a.drawFrame();
         this.addComponentListener(new ComponentAdapter()   {
             @Override
             public void componentResized(ComponentEvent e) {
-//              System.out.println("Resized to " + e.getComponent().getSize().getWidth());
+              System.out.println("Resized to " + e.getComponent().getSize().getWidth());
                 width = (int)e.getComponent().getSize().getWidth();
 
-//               System.out.println("Resized to " + e.getComponent().getSize().getHeight());
+               System.out.println("Resized to " + e.getComponent().getSize().getHeight());
                 height = (int)e.getComponent().getSize().getHeight();
 
+                a.changeBufferedImageSize();
+
                 a.update_center(width/2, height/2);
+
+                a.drawFrame();
             }
         });
+
+//        button = new JButton("asd");
+//        button.setIcon(new ImageIcon("pencil.png"));
+//        button.setBounds(400, 400, 200, 200);
+//        this.add(button);
 
         this.addMouseWheelListener(new MouseWheelListener() {
             @Override
             public void mouseWheelMoved(MouseWheelEvent e) {
                 a.changeScaleAndCenter(-e.getWheelRotation(), e.getX(), e.getY());
-                a.display_current_frame(p.poly, xes, yes, index);
+                a.drawFrame();
             }
         });
 
@@ -67,31 +84,23 @@ public class Window extends JFrame{
                 double x = Animator.translateX(e.getX());
                 double y = Animator.translateY(e.getY());
                 boolean flag = true;
-                for(int i = 0; i<index; i++){
-                    if(x == xes[i]){
+                for(int i = 0; i<a.index; i++){
+                    if(x == a.xes[i]){
                         JOptionPane.showMessageDialog(null, "Молодец, ты только что разделил на нуль");
                         flag = false;
                         continue;
                     }
                 }
                 if(flag) {
-                    xes[index] = x;
-                    yes[index] = y;
-                    index++;
+                    a.addPoint(x, y);
                 }
 
-                a.clear(); //очистить экран
-                p = new Polinomial(Arrays.copyOfRange(xes, 0, index),Arrays.copyOfRange(yes, 0, index));
-                a.drawPolynom(p.poly);
-                a.drawAxis(); //нарисовать оси
-                int wight = 4;
+                p = new Polinomial(Arrays.copyOfRange(a.xes, 0, a.index),Arrays.copyOfRange(a.yes, 0, a.index));
+                a.setPoly(p.poly);
 
                 System.out.printf("x = %.2f | y = %.2f\n",x, y);
-                g.setColor(Color.red);
-                for(int i=0; i < index; i++){
-                    g.fillOval(Animator.untranslateX(xes[i]) - wight/2, Animator.untranslateY(yes[i])-wight/2, wight ,wight);
-                }
-                g.setColor(Color.black);
+
+                a.drawFrame();
             }
 
             @Override
@@ -110,9 +119,7 @@ public class Window extends JFrame{
                 double dx = x1 - x0;
                 double dy = y1 - y0;
                 a.update_center(Animator.untranslateX(dx), Animator.untranslateY(dy));
-                if(p != null){
-                    a.display_current_frame(p.poly, xes, yes, index);
-                }
+                a.drawFrame();
             }
 
             @Override
@@ -131,13 +138,6 @@ public class Window extends JFrame{
     @Override
     public void paint(Graphics g) {
         super.paint(g);
-        if(a != null) {
-            a.clear();
-            a.drawAxis();
-            if(p != null) {
-                a.display_current_frame(p.poly, xes, yes, index);
-            }
-        }
     }
 }
 
